@@ -129,16 +129,16 @@ study.optimize(objective, n_trials=100)
 pruned_trials = [t for t in study.trials if t.state == o.trial.TrialState.PRUNED]
 complete_trials = [t for t in study.trials if t.state == o.trial.TrialState.COMPLETE]
 
-print("Study statistics: ")
-print("  Number of finished trials: ", len(study.trials))
-print("  Number of pruned trials: ", len(pruned_trials))
-print("  Number of complete trials: ", len(complete_trials))
+logging.info("Study statistics: ")
+logging.info(f"  Number of finished trials: f{len(study.trials)}")
+logging.info(f"  Number of pruned trials: f{len(pruned_trials)}")
+logging.info(f"  Number of complete trials: f{len(complete_trials)}")
 
-print("Best trial:")
+logging.info("Best trial:")
 trial = study.best_trial
 
-print("  Value: ", trial.value)
+logging.info(f"  Value: {trial.value}")
 
-print("  Params: ")
+logging.info("  Params: ")
 for key, value in trial.params.items():
-    print("    {}: {}".format(key, value))
+    logging.info(f"    {key}: {value}")
