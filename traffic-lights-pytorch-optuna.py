@@ -72,7 +72,7 @@ def define_model(trial):
     
     arch = [trial.suggest_int("n_units_l{}".format(i), 3, 6) for i in range(n_layers)]
 
-    model = MLP(features, 1, arch)
+    model = traffic_mlp(3, 1, arch) # 3 input features (r, ge, gr), 1 output (go, nogo)
 
     opt_name = trial.suggest_categorical("optimizer", ["Adam", "RMSprop", "SGD"])
     learning_rate = trial.suggest_uniform("lr", 1e-5, 1e-1)
