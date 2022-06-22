@@ -7,23 +7,20 @@ from traffiq import generate_data, traffic_mlp
 
 import logging
 
-augmentation_size=100
-scatter=0.6
-modes={'train':0.70, 'valid':0.20, 'test':0.10}
+augmentation_size=100 # defines how many times each of the base samples (e.g. red, red-yellow,..) is repeated
+scatter=0.6 # scattering of the actual values (> 0.5 will significantly reduce the performance)
+modes={'train':0.70, 'valid':0.20, 'test':0.10} # definition of available modes and their proportions
 
 datasets = generate_data(augmentation_size, scatter, modes)
 
+# epoch and batch size as steady parameters TODO: consider adding batch size as hyperparam
+epochs = 100
 batch_size = 10
         
-dataloaders = {mode:None for mode in modes}
-dataloaders["train"] = t.utils.data.DataLoader(datasets["train"], batch_size=batch_size, shuffle=True)
-dataloaders["valid"] = t.utils.data.DataLoader(datasets["valid"], batch_size=batch_size, shuffle=True)
-dataloaders["test"] = t.utils.data.DataLoader(datasets["test"], batch_size=batch_size, shuffle=True)
-
-epochs = 100
+# define dataloaders for different modes
+dataloaders = {mode:t.utils.data.DataLoader(datasets[mode], batch_size=batch_size, shuffle=True) for mode in modes}
 
 logging.info(f"Modes: {modes}\nAugmentation size: {augmentation_size}\nScatter: {scatter}\nBatch size: {batch_size}\nEpochs: {epochs}")
-
 
 def define_model(trial):
     # define number of hidden layers in the mlp (input output layer is fixed)
