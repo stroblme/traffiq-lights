@@ -68,8 +68,10 @@ dataloaders["test"] = t.utils.data.DataLoader(datasets["test"], batch_size=batch
 
 
 def define_model(trial):
+    # define number of hidden layers in the mlp (input output layer is fixed)
     n_layers = trial.suggest_int("n_layers", 1, 3)
     
+    # generate model architecture (input and output is fixed)
     arch = [trial.suggest_int("n_units_l{}".format(i), 3, 6) for i in range(n_layers)]
 
     model = traffic_mlp(3, 1, arch) # 3 input features (r, ge, gr), 1 output (go, nogo)
@@ -86,6 +88,7 @@ def objective(trial):
 
     model, opt, loss_fn = define_model(trial)
 
+    # result of the objective (could also use accuracy)
     trial_loss = 0
 
     for e in range(epochs):
