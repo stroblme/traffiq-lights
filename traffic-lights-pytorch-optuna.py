@@ -114,8 +114,8 @@ def objective(trial):
             epoch_loss = running_loss / len(dataloaders[mode].dataset)
             epoch_acc = running_corrects.float() / len(dataloaders[mode].dataset)
         
-            if e % 10 == 0:
-                print(f"{mode} loss in epoch {e}: {epoch_loss:.2}")
+            # if e % 10 == 0:
+            #     logging.info(f"{mode} loss in epoch {e}: {epoch_loss:.2}")
 
         trial_loss += epoch_loss
 
