@@ -40,14 +40,16 @@ def define_model(trial):
     return model, opt, loss_fn
 
 def objective(trial):
-
+    """
+    Objective of the hyperparameter optimization.
+    Here is the actual training and parameter updating
+    """
     model, opt, loss_fn = define_model(trial)
 
     # result of the objective (could also use accuracy)
     trial_loss = 0
 
     for e in range(epochs):
-        logs = {}
         for mode in ['train', 'valid']:
             if mode == 'train':
                 model.train()
@@ -78,25 +80,24 @@ def objective(trial):
         trial_loss += epoch_loss
 
     return trial_loss/epochs
-    
 
+if __name__ == "__main__":
+    study = o.create_study(direction="minimize")
+    study.optimize(objective, n_trials=100)
 
-study = o.create_study(direction="minimize")
-study.optimize(objective, n_trials=100)
+    pruned_trials = [t for t in study.trials if t.state == o.trial.TrialState.PRUNED]
+    complete_trials = [t for t in study.trials if t.state == o.trial.TrialState.COMPLETE]
 
-pruned_trials = [t for t in study.trials if t.state == o.trial.TrialState.PRUNED]
-complete_trials = [t for t in study.trials if t.state == o.trial.TrialState.COMPLETE]
+    logging.info("Study statistics: ")
+    logging.info(f"  Number of finished trials: f{len(study.trials)}")
+    logging.info(f"  Number of pruned trials: f{len(pruned_trials)}")
+    logging.info(f"  Number of complete trials: f{len(complete_trials)}")
 
-logging.info("Study statistics: ")
-logging.info(f"  Number of finished trials: f{len(study.trials)}")
-logging.info(f"  Number of pruned trials: f{len(pruned_trials)}")
-logging.info(f"  Number of complete trials: f{len(complete_trials)}")
+    logging.info("Best trial:")
+    trial = study.best_trial
 
-logging.info("Best trial:")
-trial = study.best_trial
+    logging.info(f"  Value: {trial.value}")
 
-logging.info(f"  Value: {trial.value}")
-
-logging.info("  Params: ")
-for key, value in trial.params.items():
-    logging.info(f"    {key}: {value}")
+    logging.info("  Params: ")
+    for key, value in trial.params.items():
+        logging.info(f"    {key}: {value}")
