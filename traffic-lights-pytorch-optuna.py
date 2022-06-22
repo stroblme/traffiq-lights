@@ -63,8 +63,9 @@ dataloaders["train"] = t.utils.data.DataLoader(datasets["train"], batch_size=bat
 dataloaders["valid"] = t.utils.data.DataLoader(datasets["valid"], batch_size=batch_size, shuffle=True)
 dataloaders["test"] = t.utils.data.DataLoader(datasets["test"], batch_size=batch_size, shuffle=True)
 
+epochs = 100
 
-# %%
+logging.info(f"Modes: {modes}\nAugmentation size: {augmentation_size}\nScatter: {scatter}\nBatch size: {batch_size}\nEpochs: {epochs}")
 
 
 def define_model(trial):
