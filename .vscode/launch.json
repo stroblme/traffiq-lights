@@ -11,6 +11,14 @@
             "program": "${workspaceRoot}/traffic-lights-pytorch-optuna.py",
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Traffiq Lights: Pytorch, Optuna",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceRoot}/traffiq-lights-pytorch-optuna.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }
