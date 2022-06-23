@@ -102,7 +102,10 @@ class traffiq_pqc():
 
     def cross_entropy_loss(self, predictions, expected):
         p = predictions.get(int(expected)) # need int-cast here for tensor incompatibility
+        try:
         return -(expected*np.log(p)+(1-expected)*np.log(1-p))
+        except RuntimeError:
+            return -(expected*np.log(p+0.0001)+(1-expected)*np.log(1-p))
     
     def cost_function(self, data, labels, variational):
         classifications = self.classification_probability(data, variational)
