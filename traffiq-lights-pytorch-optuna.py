@@ -5,22 +5,27 @@ import optuna as o
 import qiskit as q
 from qiskit.algorithms import optimizers as qo
 
+import time
+
 import matplotlib.pyplot as plt
 
 from traffiq import generate_data, traffic_mlp, traffiq_pqc
 
 import logging
 
-augmentation_size=100 # defines how many times each of the base samples (e.g. red, red-yellow,..) is repeated
+augmentation_size=10 # defines how many times each of the base samples (e.g. red, red-yellow,..) is repeated
 scatter=0.6 # scattering of the actual values (> 0.5 will significantly reduce the performance)
 modes={'train':0.70, 'valid':0.20, 'test':0.10} # definition of available modes and their proportions
 
 datasets = generate_data(augmentation_size, scatter, modes)
 
 # epoch and batch size as steady parameters TODO: consider adding batch size as hyperparam
-epochs = 100
+epochs = 10
 batch_size = 1
-        
+
+optimize_runtime = True
+duration_punisher = 1
+
 # define dataloaders for different modes
 dataloaders = {mode:t.utils.data.DataLoader(datasets[mode], batch_size=batch_size, shuffle=True) for mode in modes}
 
@@ -42,7 +47,17 @@ def define_model(trial):
     # define number of hidden layers in the mlp (input output layer is fixed)
     arch = [trial.suggest_int("n_layers_enc", 1, 3), trial.suggest_int("n_layers_pqc", 1, 3)]
 
-    model = traffiq_pqc(3, arch) # 3 input features (r, ge, gr), 1 output (go, nogo)
+    rot_gates_options = ['rx', 'ry', 'rz']
+    rot_gates = ['']*2
+    rot_gates[0] = trial.suggest_categorical("rot_gate_0", rot_gates_options)
+    rot_gates_options.remove(rot_gates[0])
+    rot_gates[1] = trial.suggest_categorical("rot_gate_1", rot_gates_options)
+
+    ent_gates = trial.suggest_categorical("ent_gates", ['cx', 'cy', 'cz']) # select more reasonable values here, just for demo
+
+    shots = trial.suggest_int("n_shots", 1000, 4000)
+
+    model = traffiq_pqc(3, 1, arch, rot_gates, ent_gates, shots) # 3 input features (r, ge, gr), 1 output (go, nogo)
 
     opt = qo.SPSA(maxiter=20, callback=store_intermediate_result) # maxiter=100 only defines the precision of gradient approx
 
@@ -62,8 +77,10 @@ def objective(trial):
     # result of the objective (could also use accuracy)
     trial_loss = 0
 
+    start = time.time()
+
     for e in range(epochs):
-        for mode in ['train']:
+        for mode in ['train']: # no validation yet
 
             running_loss = 0.0
             running_corrects = 0
@@ -73,10 +90,11 @@ def objective(trial):
                                                                     np.array(y_batch),
                                                                     variational)
 
-                opt_var, opt_value, _ = opt.optimize(len(initial_point), objective_function, initial_point=initial_point)
+                # opt_var, opt_value, _ = opt.optimize(len(initial_point), objective_function, initial_point=initial_point)
+                initial_point, opt_value, _ = opt.optimize(len(initial_point), objective_function, initial_point=initial_point)
 
 
-                running_loss += opt_value * x_batch.size(0)
+                running_loss += opt_value
                 # running_corrects += t.sum(y_pred >= 0.9*y_batch.data)
             epoch_loss = running_loss / len(dataloaders[mode].dataset)
             # epoch_acc = running_corrects.float() / len(dataloaders[mode].dataset)
@@ -85,6 +103,10 @@ def objective(trial):
             #     logging.info(f"{mode} loss in epoch {e}: {epoch_loss:.2}")
 
         trial_loss += epoch_loss
+
+    if optimize_runtime:
+        duration = time.time()-start
+        return trial_loss/epochs + (1-1/duration)*duration_punisher
 
     return trial_loss/epochs
 
