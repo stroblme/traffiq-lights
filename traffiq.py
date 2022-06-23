@@ -55,11 +55,11 @@ class traffic_mlp(t.nn.Module):
         return x
 
 class traffiq_pqc():
-    def __init__(self, input_dim, output_dim, arch=[2, 2], shots=1024):
+    def __init__(self, input_dim, output_dim, arch=[2, 2], rot_gates=['ry', 'rz'], ent_gates='cz', shots=1024):
         self.shots = shots
         
         self.enc_qc = q.circuit.library.ZZFeatureMap(feature_dimension=input_dim, reps=arch[0])
-        self.var_qc = q.circuit.library.TwoLocal(input_dim, ['ry', 'rz'], 'cz', reps=arch[1])
+        self.var_qc = q.circuit.library.TwoLocal(input_dim, rot_gates, ent_gates, reps=arch[1])
 
         self.qc = self.enc_qc.compose(self.var_qc)
         self.qc.measure_all()
