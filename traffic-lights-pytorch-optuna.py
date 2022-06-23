@@ -69,10 +69,10 @@ def objective(trial):
                     loss.backward()
                     opt.step()
 
-                running_loss += loss.detach() * x_batch.size(0)
-                running_corrects += t.sum(y_pred >= 0.9*y_batch.data)
+                running_loss += loss.detach()
+                # running_corrects += t.sum(y_pred >= 0.9*y_batch.data)
             epoch_loss = running_loss / len(dataloaders[mode].dataset)
-            epoch_acc = running_corrects.float() / len(dataloaders[mode].dataset)
+            # epoch_acc = running_corrects.float() / len(dataloaders[mode].dataset)
         
             # if e % 10 == 0:
             #     logging.info(f"{mode} loss in epoch {e}: {epoch_loss:.2}")
