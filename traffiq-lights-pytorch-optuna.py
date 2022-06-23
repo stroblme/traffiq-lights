@@ -44,7 +44,7 @@ def define_model(trial):
 
     model = traffiq_pqc(3, arch) # 3 input features (r, ge, gr), 1 output (go, nogo)
 
-    opt = qo.SPSA(maxiter=100, callback=store_intermediate_result) # maxiter=100 only defines the precision of gradient approx
+    opt = qo.SPSA(maxiter=20, callback=store_intermediate_result) # maxiter=100 only defines the precision of gradient approx
 
     loss_fn = model.cost_function
 
