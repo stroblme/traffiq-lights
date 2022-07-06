@@ -6,7 +6,7 @@ import logging
 def generate_data(augmentation_size:int=100, scatter:float=0.6, modes:dict={'train':0.70, 'valid':0.20, 'test':0.10}
                 ) -> t.utils.data.TensorDataset:
 
-    x_base = t.FloatTensor([[0,0,1], [0,1,0], [1,1,0], [1,0,0]])
+    x_base = t.FloatTensor([[0,0,1], [1,1,0], [0,1,0], [1,0,0]])
     y_base = t.FloatTensor([1, 1, 0, 0])
 
     features = 3
@@ -16,7 +16,7 @@ def generate_data(augmentation_size:int=100, scatter:float=0.6, modes:dict={'tra
         actual_augmentation = int(augmentation_size*proportion)
 
         x_enhanced = t.zeros((actual_augmentation*x_base.size(0), features))
-        y_enhanced = np.repeat(y_base, augmentation_size*proportion)
+        y_enhanced = np.repeat(y_base, actual_augmentation)
 
         for b, c in enumerate(x_base):
             for a in range(actual_augmentation):
@@ -102,11 +102,12 @@ class traffiq_pqc():
 
     def cross_entropy_loss(self, predictions, expected):
         p = predictions.get(int(expected)) # need int-cast here for tensor incompatibility
+
         try:
-        return -(expected*np.log(p)+(1-expected)*np.log(1-p))
+            return -(expected*np.log(p)+(1-expected)*np.log(1-p))
         except RuntimeError:
             return -(expected*np.log(p+0.0001)+(1-expected)*np.log(1-p))
-    
+
     def cost_function(self, data, labels, variational):
         classifications = self.classification_probability(data, variational)
 
