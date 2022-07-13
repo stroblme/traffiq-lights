@@ -13,6 +13,14 @@
             "justMyCode": true
         },
         {
+            "name": "Traffiq Lights: Pytorch",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceRoot}/traffiq-lights-pytorch.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "name": "Traffiq Lights: Pytorch, Optuna",
             "type": "python",
             "request": "launch",
