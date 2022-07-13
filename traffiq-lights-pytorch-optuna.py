@@ -2,14 +2,13 @@
 import torch as t
 import numpy as np #interp, repeat
 import optuna as o
-import qiskit as q
 from qiskit.algorithms import optimizers as qo
 
 import time
 
 import matplotlib.pyplot as plt
 
-from traffiq import generate_data, traffic_mlp, traffiq_pqc
+from traffiq import generate_data, traffiq_pqc
 
 import logging
 
