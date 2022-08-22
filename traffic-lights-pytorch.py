@@ -26,7 +26,7 @@ modes={'train':0.70, 'valid':0.20, 'test':0.10} # definition of available modes 
 datasets = generate_data(augmentation_size, scatter, modes)
 
 # epoch and batch size as steady parameters TODO: consider adding batch size as hyperparam
-epochs = 10
+epochs = 100
 mlflow.log_param("epochs", epochs)
 batch_size = 1
 mlflow.log_param("batch_size", batch_size)
@@ -89,8 +89,7 @@ if __name__ == "__main__":
             # if e % 10 == 0:
             #     logging.info(f"{mode} loss in epoch {e}: {epoch_loss:.2}")
 
-        trial_loss += epoch_loss
-        mlflow.log_metric(key="epoch_loss", value=epoch_loss, step=e)
+            mlflow.log_metric(key=f"{mode}_loss", value=epoch_loss, step=e)
 
 
 
