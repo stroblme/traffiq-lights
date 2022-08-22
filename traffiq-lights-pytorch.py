@@ -108,8 +108,7 @@ if __name__ == "__main__":
         
             # if e % 10 == 0:
             log.info(f"{mode} loss in epoch {e}: {epoch_loss:.2}")
-            mlflow.log_metric(key="epoch_loss", value=epoch_loss, step=e)
+            mlflow.log_metric(key=f"{mode}_loss", value=epoch_loss, step=e)
 
-        trial_loss += epoch_loss
 
 
