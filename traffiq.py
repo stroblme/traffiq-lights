@@ -1,6 +1,8 @@
 import torch as t
 import numpy as np  # repeat
 import qiskit as q
+from qiskit_machine_learning.neural_networks import CircuitQNN, TwoLayerQNN
+from qiskit_machine_learning.connectors import TorchConnector
 import logging
 
 
@@ -149,17 +151,23 @@ class traffiq_pqc:
         return cost
 
 
-class traffiqc_pqc:
+class traffiqc_pqc(t.nn.Module):
     def __init__(
         self,
         input_dim,
         output_dim,
-        arch=[2, 2],
+        arch=[2, 2, [2, 4, 2]],
         rot_gates=["ry", "rz"],
         ent_gates="cz",
         shots=1024,
     ):
+        super(traffiqc_pqc, self).__init__()
         self.shots = shots
+
+        
+        self.qi = q.utils.QuantumInstance(
+            q.Aer.get_backend("aer_simulator_statevector")
+        )
 
         self.enc_qc = q.circuit.library.ZZFeatureMap(
             feature_dimension=input_dim, reps=arch[0]
@@ -172,6 +180,34 @@ class traffiqc_pqc:
         self.qc.measure_all()
 
         self.qc.draw()
+
+        self.qnn = CircuitQNN(
+            self.qc,
+            self.enc_qc.parameters,
+            self.var_qc.parameters,
+            quantum_instance=self.qi,
+            # interpret=interpreter,
+            # output_shape=(n_fsps**2, n_classes),
+            # sampling=True,
+            input_gradients=True,
+        )
+        self.initial_weights = 0.1 * (
+            2 * q.utils.algorithm_globals.random.random(self.qnn.num_weights) - 1
+        )
+        # log.info(f"Transpilation took {time.time() - start}")
+        self.quantum_layer = TorchConnector(
+            self.qnn, initial_weights=self.initial_weights
+        )
+
+        self.conn_layer = t.nn.Linear(2**input_dim, arch[-1][0])
+
+        self.hidden_layers = []
+        for layer_it in range(len(arch[-1]) - 1):
+            self.hidden_layers.append(t.nn.Linear(arch[-1][layer_it], arch[-1][layer_it + 1]))
+
+        self.output_layer = t.nn.Linear(arch[-1][-1], output_dim)
+
+        
 
     def circuit_parameters(self, data, variational):
         parameters = {}
@@ -230,3 +266,13 @@ class traffiqc_pqc:
         cost /= len(data)
 
         return cost
+
+    def forward(self, x):
+        x = t.nn.functional.relu(self.quantum_layer(x))
+        x = t.nn.functional.relu(self.conn_layer(x))
+
+        for hidden_layer in self.hidden_layers:
+            x = t.nn.functional.relu(hidden_layer(x))
+
+        x = t.sigmoid(self.output_layer(x))
+        return x
