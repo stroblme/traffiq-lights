@@ -8,7 +8,7 @@ import time
 
 import matplotlib.pyplot as plt
 
-from traffiq import generate_data, traffiq_pqc
+from traffiq import generate_data, traffiqc_pqc
 
 import logging
 
@@ -64,7 +64,7 @@ def store_intermediate_result(evaluation, parameter, cost, stepsize, accept):
 
 def define_model():
     # define number of hidden layers in the mlp (input output layer is fixed)
-    arch = [1, 1]
+    arch = [1, 1, [2, 4, 2]]
     mlflow.log_param("arch", arch)
 
     rot_gates = [""] * 2
@@ -78,15 +78,15 @@ def define_model():
     shots = 1024
     mlflow.log_param("shots", shots)
 
-    model = traffiq_pqc(
+    model = traffiqc_pqc(
         3, 1, arch, rot_gates, ent_gates, shots
     )  # 3 input features (r, ge, gr), 1 output (go, nogo)
 
-    opt = qo.SPSA(
-        maxiter=20, callback=store_intermediate_result
+    opt = t.optim.Adam(
+        model.parameters(), lr=1e-3
     )  # maxiter=100 only defines the precision of gradient approx
 
-    loss_fn = model.cost_function
+    loss_fn = t.nn.BCELoss()
 
     return model, opt, loss_fn
 
@@ -94,8 +94,8 @@ def define_model():
 if __name__ == "__main__":
     model, opt, loss_fn = define_model()
 
-    initial_point = np.random.random(model.var_qc.num_parameters)
-    mlflow.log_param("initial_point", initial_point)
+    # initial_point = np.random.random(model.var_qc.num_parameters)
+    # mlflow.log_param("initial_point", initial_point)
 
     # result of the objective (could also use accuracy)
     trial_loss = 0
@@ -104,30 +104,32 @@ if __name__ == "__main__":
     log.info(f"Staring training at {start}")
 
     for e in range(epochs):
-        for mode in ["train"]:  # no validation yet
+        for mode in ["train", "valid"]:
+            if mode == "train":
+                model.train()
+            else:
+                model.eval()
 
             running_loss = 0.0
             running_corrects = 0
 
             for x_batch, y_batch in dataloaders[mode]:
-                objective_function = lambda variational: loss_fn(
-                    np.array(
-                        x_batch
-                    ),  # need to convert to numpy here.. tensor is "non-numeric"
-                    np.array(y_batch),
-                    variational,
-                )
+                y_pred = model(x_batch)
 
-                # opt_var, opt_value, _ = opt.optimize(len(initial_point), objective_function, initial_point=initial_point)
-                initial_point, opt_value, _ = opt.optimize(
-                    len(initial_point), objective_function, initial_point=initial_point
-                )
+                loss = loss_fn(y_pred.view(-1), y_batch)
 
-                running_loss += opt_value
+                if mode == "train":
+                    opt.zero_grad()
+                    loss.backward()
+                    opt.step()
+
+                running_loss += loss.detach()
                 # running_corrects += t.sum(y_pred >= 0.9*y_batch.data)
             epoch_loss = running_loss / len(dataloaders[mode].dataset)
             # epoch_acc = running_corrects.float() / len(dataloaders[mode].dataset)
 
             # if e % 10 == 0:
-            log.info(f"{mode} loss in epoch {e}: {epoch_loss:.2}")
+            #     logging.info(f"{mode} loss in epoch {e}: {epoch_loss:.2}")
+
             mlflow.log_metric(key=f"{mode}_loss", value=epoch_loss, step=e)
+
