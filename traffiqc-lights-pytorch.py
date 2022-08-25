@@ -36,7 +36,7 @@ datasets = generate_data(augmentation_size, scatter, modes)
 # epoch and batch size as steady parameters TODO: consider adding batch size as hyperparam
 epochs = 10
 mlflow.log_param("epochs", epochs)
-batch_size = 1
+batch_size = 5
 mlflow.log_param("batch_size", batch_size)
 
 # define dataloaders for different modes
@@ -117,7 +117,7 @@ if __name__ == "__main__":
                 y_pred = model(x_batch)
 
                 loss = loss_fn(y_pred.view(-1), y_batch)
-
+    
                 if mode == "train":
                     opt.zero_grad()
                     loss.backward()
